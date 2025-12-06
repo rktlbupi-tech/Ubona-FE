@@ -206,17 +206,7 @@ const HaloShowcase = () => {
     // Only use scroll animation on desktop
     if (isDesktop) {
       const total = data.length;
-      // We need to calculate the absolute scroll position
-      // The ScrollTrigger pins the container for (total-1) * window.innerHeight
-      // So the total scroll distance is that amount.
-      // We want to scroll to: start + (index / (total-1)) * duration
 
-      // Since we don't have direct access to the ScrollTrigger instance easily here without ref,
-      // we can recalculate based on the known logic:
-      // Start: container top (which will be at window top when pinned)
-      // But since it's pinned, we need to scroll the WINDOW to the correct spot.
-
-      // Let's find the trigger start position relative to the document
       const triggerStart = containerRef.current.offsetTop;
       const duration = window.innerHeight * (total - 1);
 
@@ -233,7 +223,7 @@ const HaloShowcase = () => {
   return (
     <section
       ref={containerRef}
-      className="relative w-full! bg-[#001528] overflow-hidden pt-8 xl:pt-6 2xl:pt-10 pb-22"
+      className="relative z-10 w-full! bg-[#001528] overflow-hidden pt-8 xl:pt-6 2xl:pt-10 pb-22"
     >
       <motion.div
         initial={{ opacity: 0 }}
