@@ -3,7 +3,7 @@ import ScrollReveal from "../animation/ScrollReveal";
 import { ScrollCards } from "../../static/homeData";
 function OutComes() {
   return (
-    <div className="pb-10 px-8 xl:px-12 2xl:px-22">
+    <div className="pb-24 px-8">
       <ScrollReveal cards={ScrollCards} />
     </div>
   );
