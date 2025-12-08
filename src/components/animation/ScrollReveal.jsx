@@ -27,47 +27,55 @@ const ScrollReveal = ({ cards }) => {
       const numCards = cardElements.length;
       if (numCards === 0) return;
 
-      // Initial state: Hidden (opacity: 0) and slightly below (y: 100).
-      // The added y: -50 is the initial parallax offset.
+      const [firstCard, ...restCards] = cardElements;
+
+      // Initial state for ALL cards: Hidden and slightly below
       gsap.set(cardElements, { y: 100, opacity: 0, scale: 0.95 });
 
-      // Create a master timeline for the sequence
-      const tl = gsap.timeline({
+      // --- Animation 1: First Card (Auto-reveal on enter) ---
+      gsap.to(firstCard, {
+        y: -50, // Parallax pull
+        opacity: 1,
+        scale: 1,
+        duration: 0.8,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 15%",
-          end: () => `+=${numCards * 400}px`, // Increased end distance for smoother pauses
-          pin: true,
-          pinSpacing: true,
-          scrub: 0.5, // Smooth scrubbing
-          // markers: true, // Uncomment for debugging
+          start: "top 75%", // Triggers when top of section hits 75% of viewport
+          toggleActions: "play none none reverse",
         },
       });
 
-      // Stagger the animation of each card onto the screen
-      cardElements.forEach((card, i) => {
-        // 1. Reveal Tween: Move card up, fade in, and apply parallax pull (y: -50).
-        tl.to(card, {
-          y: -50, // Parallax: Animate to a higher position as it fades in
-          opacity: 1,
-          scale: 1,
-          duration: 0.5,
-          ease: "power2.out",
-        }, i === 0 ? 0 : "<25%"); // Start the reveal before the previous one ends
+      // --- Animation 2: Remaining Cards (Scrubbed with Pin) ---
+      if (restCards.length > 0) {
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 15%",
+            end: () => `+=${restCards.length * 400}px`,
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+          },
+        });
 
-        // 2. Pause Tween: Adds scroll distance where the card is fully visible.
-        tl.to({}, { duration: 0.8 }); // Increased duration for a longer pause
-      });
+        // Add a small initial pause so the user settles into the pin before 2nd card starts
+        tl.to({}, { duration: 0.2 });
 
-      // Optional: Animate all cards slightly down at the very end when leaving
-      tl.to(cardElements, {
-        y: -10,
-        opacity: 0.5,
-        duration: 1,
-        ease: "power1.inOut"
-      }, ">");
+        restCards.forEach((card, i) => {
+          // Reveal Tween
+          tl.to(card, {
+            y: -50,
+            opacity: 1,
+            scale: 1,
+            duration: 0.5,
+            ease: "power2.out",
+          }, "<25%"); // Overlap slightly with previous action
 
-
+          // Pause Tween (keep visible for a bit)
+          tl.to({}, { duration: 0.8 });
+        });
+      }
     }, sectionRef);
 
     return () => {
@@ -98,10 +106,11 @@ const ScrollReveal = ({ cards }) => {
                     zIndex: 10 - i,
                   }
                 :  {
-                    top: 0,
+                    top: `${i * 60}px`, // Stack offset for mobile
                     left: 0,
                     width: "100%",
                     position: "absolute",
+                    zIndex: i, // Ensure later cards stack ON TOP of earlier ones
                   }
               }
             >

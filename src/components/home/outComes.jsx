@@ -4,6 +4,7 @@ import { ScrollCards } from "../../static/homeData";
 function OutComes() {
   return (
     <div className="px-8">
+      
       <ScrollReveal cards={ScrollCards} />
     </div>
   );
