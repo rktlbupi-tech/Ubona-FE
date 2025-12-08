@@ -77,50 +77,45 @@ const ScrollReveal = ({ cards }) => {
 
   // --- Render ---
   return (
-    <section ref={sectionRef} className="overflow-hidden  pt-10">
-      <h3 className="text-[1.75rem] text-[#003066] font-medium tracking-tight text-center md:text-left mb-10 container mx-auto">
-        Transformative Outcomes
-      </h3>
-
-      <div className="relative w-full flex justify-center pt-10">
-        {/* The h-[600px] height here establishes the size of the *pinned container* */}
-        <div className="relative w-full h-[600px] overflow-visible container mx-auto px-4 max-w-7xl">
-          {cards.map((item, i) => {
-            const desktopStyles = isDesktop
-              ? {
-                left: `${i * 25}%`,
-                top: `${i * 70}px`, // Adjusted top offset for tighter stack
-                zIndex: 10 - i,
+     <section
+      ref={sectionRef}
+      className="overflow-hidden px-4"
+    >
+      <h3 className="text-[1.75rem] text-[#003066] font-medium tracking-tight text-center md:text-left mb-16">Transformative Outcomes</h3>
+      {/* Wrapper with enough space */}
+      <div className="relative w-full  flex justify-center overflow-visible">
+        <div className="relative w-full h-[600px] overflow-visible">
+          {cards.map((item, i) => (
+            <div
+              key={i}
+              ref={(el) => (cardRefs.current[i] = el)} 
+              className={`absolute  flex flex-col justify-between w-full md:w-[23.5%] h-[348px] md:h-[308px] rounded-xl shadow-xl p-6 transition-all duration-700 ${item.color} ${item.text}`}
+              style={
+                isDesktop
+                ? {
+                    left: `${i * 25}%`,
+                    top: `${i * 90}px`,
+                    zIndex: 10 - i,
+                  }
+                :  {
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    position: "absolute",
+                  }
               }
-              : {
-                top: 0,
-                left: 0,
-                width: "100%",
-              };
-
-            return (
-              <div
-                key={i}
-                ref={(el) => (cardRefs.current[i] = el)}
-                className={`absolute flex flex-col justify-between w-full md:w-[23.5%] h-[348px] md:h-[308px] rounded-xl p-6 transition-none ${item.color} ${item.text} backdrop-blur-sm`}
-                style={desktopStyles}
-              >
-                <div>
-                  <h4 className="text-sm uppercase font-semibold mb-3">
-                    {item.title}
-                  </h4>
-                  <p className="text-[4.5rem] md:text-[5.5rem] font-bold leading-none mb-3">
-                    {item.percent}
-                  </p>
-                </div>
-                <p className="text-base font-normal">{item.desc}</p>
+            >
+              <div>
+                <h4 className="text-sm uppercase font-medium mb-3">
+                  {item.title}
+                </h4>
+                <p className="text-[5.5rem] font-medium mb-3">{item.percent}</p>
               </div>
-            );
-          })}
+              <p className="text-base font-normal">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
-
-
     </section>
   );
 };
