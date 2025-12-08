@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
-
+// test
 const ScrollReveal = ({ cards }) => {
   const [isDesktop, setIsDesktop] = useState(false);
   const sectionRef = useRef(null);
