@@ -94,7 +94,7 @@ const ScrollReveal = ({ cards }) => {
   return (
     <section
       ref={sectionRef}
-      className={`relative w-full overflow-hidden pt-10 ${isDesktop ? "h-screen flex items-center" : ""}`}
+      className={`relative w-full overflow-hidden pt-10 ${isDesktop ? "mb-[-200px] h-screen flex items-center" : ""}`}
     >
       {/* Wrapper with enough space */}
       <div className="relative w-full flex justify-center overflow-visible">

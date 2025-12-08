@@ -102,7 +102,7 @@ const ScrollReveal = ({ cards }) => {
                 isDesktop
                 ? {
                     left: `${i * 25}%`,
-                    top: `${i * 90}px`,
+                    top: `${i * 55}px`,
                     zIndex: 10 - i,
                   }
                 :  {

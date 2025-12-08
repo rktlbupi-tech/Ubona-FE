@@ -225,7 +225,7 @@ const ScrollRevealRight = ({ cards }) => {
     <section
       ref={sectionRef}
       className={`relative w-full nnn  ${
-        isMobile ? "py-12.5" : "min-h-screen pt-20"
+        isMobile ? "py-12.5 ml-10" : "min-h-screen pt-20"
       }`}
     >
       <div
