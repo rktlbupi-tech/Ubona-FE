@@ -9,6 +9,14 @@ import MainBanner from '../components/about/mainBanner';
 import BuildingCultureSection from '../components/about/buildingCulture';
 import MeetVisionariesSection from '../components/about/meetVisionaries';
 function AboutUs() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useSEO({
     title: "About Us | Ubona",
     description: "Learn about Ubona's mission and vision."
@@ -23,8 +31,15 @@ function AboutUs() {
         />
         <AboutUsVisionMission />
       </section>
-      <CoreValues />
-      <GreatCards />
+
+
+
+      <div className="bg-[#001528] pt-20.5 md:pt-0">
+        <CoreValues />
+      </div>
+      <div className={`relative z-20 ${isDesktop ? "-mt-32 md:-mt-48" : "md:-mt-48"}`}>
+        <GreatCards />
+      </div>
       <BuildingCultureSection />
       <MeetVisionariesSection />
     </div>

@@ -1,4 +1,3 @@
-import React from 'react'
 import useSEO from "../utils/useSEO";
 import CareersBanner from '../components/carrers/carrersbanner'
 import LifeAtUbona from '../components/carrers/lifeatubona'
@@ -7,7 +6,17 @@ import TestimonialSection from '../components/home/testimonial'
 import { Testimonials } from "../static/careerData";
 import WhyUbona from '../components/carrers/whyubona'
 import GreatCards from "../components/about/greatCards";
+import React, { useState, useEffect } from "react";
 function Carrers() {
+
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useSEO({
     title: "Join Ubona: Careers in Cloud-Based Call Center Solutions",
     description: "Explore exciting career opportunities at Ubona, a leader in AI based IVR, customer support chatbots, and the best cloud telephony solutions in India."
@@ -15,14 +24,16 @@ function Carrers() {
   return (
     <div>
       <div className="bg-[#001528] pt-20.5 md:pt-0">
-        <CareersBanner/>
+        <CareersBanner />
       </div>
-      <GreatCards />
-      <LifeAtUbona/>
-      <CareersSection/>
+      <div className={`relative z-20 ${isDesktop ? "-mt-32 md:-mt-48" : "md:-mt-48"}`}>
+        <GreatCards />
+      </div>
+      <LifeAtUbona />
+      <CareersSection />
       <TestimonialSection testimonials={Testimonials} heading="Hear It From the People Who Make Ubona What It Is" buttonLink={false} />
-      <WhyUbona/>
-    </div>
+      <WhyUbona />
+    </div >
   )
 }
 
