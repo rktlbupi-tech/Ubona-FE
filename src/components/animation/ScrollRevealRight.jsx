@@ -4,14 +4,15 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LazyImage from "../lazyImage";
 import { Link } from "react-router-dom";
 import ButtonArrow from "../buttonArrow";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 const ScrollRevealRight = ({ cards }) => {
   const sectionRef = useRef(null);
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
-  const expandedCardRef = useRef(null); // Added: Ref to hold expandedCard state for ScrollTrigger
+  const expandedCardRef = useRef(null); 
 
   const [expandedCard, setExpandedCard] = useState(null);
   const [isMobile, setIsMobile] = useState(() =>
@@ -21,37 +22,89 @@ const ScrollRevealRight = ({ cards }) => {
   const handleToggle = (index) =>
     setExpandedCard((prev) => (prev === index ? null : index));
 
-  // Added: Update expandedCardRef and refresh ScrollTrigger when expandedCard changes
+  // Helper to calculate total width consistently
+  const calculateTotalWidth = (isExpanded) => {
+    const baseCardWidth = 374;
+    const expandedCardWidth = 1162;
+    const cardGap = 28;
+    const padding = 160; 
+    const widthDiff = expandedCardWidth - baseCardWidth;
+    
+    return cards.length * baseCardWidth + 
+           (cards.length - 1) * cardGap + 
+           padding + 
+           (isExpanded ? widthDiff : 0);
+  };
+  
+  const triggerRef = useRef(null);
+
+  // --- Effect 1: State Change Handler and Scroll Back (Removed setTimeout) ---
   useEffect(() => {
     expandedCardRef.current = expandedCard;
-    // Refresh ScrollTrigger to recalculate end/x positions cleanly without recreating the trigger
-    ScrollTrigger.refresh();
+
+    // Logic to prevent "jump to bottom" when collapsing (by scrolling back)
+    if (expandedCard === null && triggerRef.current) {
+        const newTotalWidth = calculateTotalWidth(false);
+        const viewportWidth = window.innerWidth;
+        const newMaxScroll = newTotalWidth - viewportWidth;
+        
+        const safeMaxScroll = Math.max(0, newMaxScroll);
+        
+        const currentScroll = window.scrollY;
+        const start = triggerRef.current.start; 
+        const newEnd = start + safeMaxScroll;
+
+        if (currentScroll > newEnd) {
+            // Use GSAP.to for smooth scroll back
+            gsap.to(window, {
+                scrollTo: newEnd, 
+                duration: 0.5, // Faster scroll back on collapse feels better
+                ease: "power2.out",
+                overwrite: "auto"
+            });
+        }
+    }
+    // Removed: Delayed ScrollTrigger refresh - it's now in Effect 4's onComplete
+
   }, [expandedCard]);
 
-  // Conflicting centering logic disabled to allow ScrollTrigger to handle movement
-  // useEffect(() => {
-  //   if (isMobile || !containerRef.current || expandedCard === null) return;
+  // --- Effect 2: Scroll-to-center logic ---
+  useEffect(() => {
+    if (isMobile || !containerRef.current || expandedCard === null || !triggerRef.current) return;
 
-  //   const baseCardWidth = 374;
-  //   const expandedCardWidth = 1162;
-  //   const gap = 28;
+    const baseCardWidth = 374;
+    const gap = 28;
+    const expandedCardWidth = 1162;
 
-  //   // Calculate left offset of expanded card
-  //   const cardLeft = expandedCard * (baseCardWidth + gap);
+    // 1. Calculate the ideal visual shift to center the card
+    const cardLeft = expandedCard * (baseCardWidth + gap);
+    const viewportWidth = window.innerWidth;
+    const centerOffset = (viewportWidth - expandedCardWidth) / 2;
+    const targetShift = -(cardLeft - centerOffset); 
 
-  //   // Center the expanded card inside viewport
-  //   const viewportWidth = window.innerWidth;
-  //   const centerOffset = (viewportWidth - expandedCardWidth) / 2;
+    // 2. Calculate the corresponding Scroll Position
+    const totalMovement = -(containerRef.current.scrollWidth - viewportWidth); 
+    
+    if (totalMovement === 0) return;
 
-  //   // Final shift (negative = move container left, positive = right)
-  //   const shift = -(cardLeft - centerOffset);
+    let progress = targetShift / totalMovement;
+    progress = Math.max(0, Math.min(1, progress));
 
-  //   gsap.to(containerRef.current, {
-  //     x: shift,
-  //     duration: 1,
-  //     ease: "power3.out",
-  //   });
-  // }, [expandedCard, isMobile]);
+    const start = triggerRef.current.start;
+    const end = triggerRef.current.end;
+    const totalScrollDistance = end - start;
+
+    const targetScrollPos = start + (totalScrollDistance * progress);
+
+    // 3. Animate scroll to that position
+    gsap.to(window, {
+        scrollTo: targetScrollPos,
+        duration: 1, // MUST match card expansion duration
+        ease: "power3.out",
+        overwrite: "auto" 
+    });
+
+  }, [expandedCard, isMobile]);
 
   const calculateCardShift = (index, expandedIndex) => {
     const baseCardWidth = 374;
@@ -63,7 +116,8 @@ const ScrollRevealRight = ({ cards }) => {
 
     return widthDifference;
   };
-
+  
+  // --- Effect 3: Initial Card Fade-in Animation (Unchanged) ---
   useEffect(() => {
     if (isMobile || !sectionRef.current || cards.length === 0) return;
 
@@ -86,12 +140,14 @@ const ScrollRevealRight = ({ cards }) => {
     return () => ctx.revert();
   }, [cards.length, isMobile]);
 
+  // --- Effect 4: Card Width, Position Tweens, and ScrollTrigger Refresh (MODIFIED) ---
   useEffect(() => {
     if (!containerRef.current || cardRefs.current.length === 0 || isMobile)
       return;
 
     const baseCardWidth = 374;
     const expandedCardWidth = 1162;
+    const isChanging = expandedCard !== null; // Flag to track if we need a refresh
 
     cards.forEach((_, i) => {
       const isExpanding = expandedCard === i;
@@ -106,48 +162,33 @@ const ScrollRevealRight = ({ cards }) => {
       });
     });
 
-    //const totalWidth = cards.length * baseCardWidth + cards.length * 28 + 400;
-    // const totalWidth =
-    //   (cards.length - 1) * (baseCardWidth + 28) +
-    //   expandedCardWidth + // include full expanded width
-    //   350;
-    const cardGap = 28;
-    const padding = 160; // 80px left + 80px right
-    const totalWidth =
-      cards.length * baseCardWidth +
-      (cards.length - 1) * cardGap +
-      padding +
-      (expandedCard !== null ? expandedCardWidth - baseCardWidth : 0);
+    const totalWidth = calculateTotalWidth(expandedCard !== null);
 
+    // Animate container width, and trigger refresh ONLY when this tween completes
     gsap.to(containerRef.current, {
       width: totalWidth,
       duration: 1,
       ease: "power3.inOut",
+      onComplete: () => {
+        // This fires after 1 second, when the layout shift is fully complete.
+        // This is the smoothest time to tell ScrollTrigger to recalculate its range.
+        ScrollTrigger.refresh();
+      }
     });
   }, [expandedCard, isMobile, cards.length]);
 
+  // --- Effect 5: Main ScrollTrigger Setup (Unchanged) ---
   useEffect(() => {
     if (isMobile || !sectionRef.current || !containerRef.current) return;
 
     const ctx = gsap.context(() => {
-      const cardsEl = cardRefs.current;
-      if (!cardsEl.length) return;
+      if (!cardRefs.current.length) return;
 
-      const baseCardWidth = 374;
-      const expandedCardWidth = 1162;
-      const cardGap = 28;
-      const padding = 160; // 80px left + 80px right
-
-      // Helper to get fresh state during refresh without re-running effect
       const getMaxScroll = () => {
-        const currentExpanded = expandedCardRef.current; // Use ref here
+        const isExpanded = expandedCardRef.current !== null;
         const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
         
-        const calculatedTotalWidth =
-          cards.length * baseCardWidth +
-          (cards.length - 1) * cardGap +
-          padding +
-          (currentExpanded !== null ? expandedCardWidth - baseCardWidth : 0);
+        const calculatedTotalWidth = calculateTotalWidth(isExpanded);
 
         return calculatedTotalWidth - viewportWidth;
       };
@@ -156,29 +197,29 @@ const ScrollRevealRight = ({ cards }) => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: () => `+=${getMaxScroll()}`, // Use functional value
-          scrub: 0.5, // Reduced scrub slightly for responsiveness
+          end: () => `+=${getMaxScroll()}`, 
+          scrub: 0.5,
           pin: true,
           anticipatePin: 1,
-          invalidateOnRefresh: true, // Recalculate on resize
+          invalidateOnRefresh: true,
         },
       });
+      
+      triggerRef.current = tl.scrollTrigger;
 
-      // Horizontal movement: Functional x value allows updating on refresh
       tl.to(containerRef.current, {
-        x: () => -getMaxScroll(), // Use functional value
+        x: () => -getMaxScroll(),
         ease: "none",
         duration: 1,
       });
     }, sectionRef);
 
     return () => {
-      // Capture current X position before reverting to prevent jumps
       const currentX = gsap.getProperty(containerRef.current, "x");
       ctx.revert();
       gsap.set(containerRef.current, { x: currentX });
     };
-  }, [cards.length, isMobile]); // Removed expandedCard dependency to prevent teardown
+  }, [cards.length, isMobile]);
 
   return (
     <section
@@ -202,12 +243,10 @@ const ScrollRevealRight = ({ cards }) => {
           style={
             !isMobile
               ? {
-                  // paddingLeft: "80px", // Handle via absolute positioning now
-                  // paddingRight: "80px",
                   display: "flex",
                   gap: "28px",
                   position: "relative",
-                  height: "100%" // Added height to ensure container fills parent
+                  height: "100%" 
                 }
               : {}
           }
@@ -237,7 +276,7 @@ const ScrollRevealRight = ({ cards }) => {
                         width: `${baseCardWidth}px`,
                         minHeight: "306px",
                         top: `${i === 0 ? 35 : i * 120}px`,
-                        left: `${80 + initialLeft}px`, // Added 80px offset
+                        left: `${80 + initialLeft}px`, 
                         zIndex: zIndex,
                         transformOrigin: "left center",
                       }

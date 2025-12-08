@@ -89,7 +89,7 @@ const ScrollReveal = ({ cards }) => {
       ref={sectionRef}
       className="overflow-hidden px-4"
     >
-      <h3 className="text-[1.75rem] text-[#003066] font-medium tracking-tight text-center md:text-left mb-16">Transformative Outcomes</h3>
+      <h3 className="text-[1.75rem] text-[#003066] font-medium tracking-tight text-center md:text-left mt-8 mb-24">Transformative Outcomes</h3>
       {/* Wrapper with enough space */}
       <div className="relative w-full  flex justify-center overflow-visible">
         <div className="relative w-full h-[600px] overflow-visible">
