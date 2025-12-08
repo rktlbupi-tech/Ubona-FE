@@ -11,7 +11,7 @@ const ScrollRevealRight = ({ cards }) => {
   const sectionRef = useRef(null);
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
-  const scrollTriggerRef = useRef(null);
+  const expandedCardRef = useRef(null); // Added: Ref to hold expandedCard state for ScrollTrigger
 
   const [expandedCard, setExpandedCard] = useState(null);
   const [isMobile, setIsMobile] = useState(() =>
@@ -21,29 +21,37 @@ const ScrollRevealRight = ({ cards }) => {
   const handleToggle = (index) =>
     setExpandedCard((prev) => (prev === index ? null : index));
 
+  // Added: Update expandedCardRef and refresh ScrollTrigger when expandedCard changes
   useEffect(() => {
-    if (isMobile || !containerRef.current || expandedCard === null) return;
+    expandedCardRef.current = expandedCard;
+    // Refresh ScrollTrigger to recalculate end/x positions cleanly without recreating the trigger
+    ScrollTrigger.refresh();
+  }, [expandedCard]);
 
-    const baseCardWidth = 374;
-    const expandedCardWidth = 1162;
-    const gap = 28;
+  // Conflicting centering logic disabled to allow ScrollTrigger to handle movement
+  // useEffect(() => {
+  //   if (isMobile || !containerRef.current || expandedCard === null) return;
 
-    // Calculate left offset of expanded card
-    const cardLeft = expandedCard * (baseCardWidth + gap);
+  //   const baseCardWidth = 374;
+  //   const expandedCardWidth = 1162;
+  //   const gap = 28;
 
-    // Center the expanded card inside viewport
-    const viewportWidth = window.innerWidth;
-    const centerOffset = (viewportWidth - expandedCardWidth) / 2;
+  //   // Calculate left offset of expanded card
+  //   const cardLeft = expandedCard * (baseCardWidth + gap);
 
-    // Final shift (negative = move container left, positive = right)
-    const shift = -(cardLeft - centerOffset);
+  //   // Center the expanded card inside viewport
+  //   const viewportWidth = window.innerWidth;
+  //   const centerOffset = (viewportWidth - expandedCardWidth) / 2;
 
-    gsap.to(containerRef.current, {
-      x: shift,
-      duration: 1,
-      ease: "power3.out",
-    });
-  }, [expandedCard, isMobile]);
+  //   // Final shift (negative = move container left, positive = right)
+  //   const shift = -(cardLeft - centerOffset);
+
+  //   gsap.to(containerRef.current, {
+  //     x: shift,
+  //     duration: 1,
+  //     ease: "power3.out",
+  //   });
+  // }, [expandedCard, isMobile]);
 
   const calculateCardShift = (index, expandedIndex) => {
     const baseCardWidth = 374;
@@ -104,11 +112,13 @@ const ScrollRevealRight = ({ cards }) => {
     //   expandedCardWidth + // include full expanded width
     //   350;
     const cardGap = 28;
-
+    const padding = 160; // 80px left + 80px right
     const totalWidth =
-      cards.length * (baseCardWidth + cardGap) +
-      (expandedCard !== null ? expandedCardWidth - baseCardWidth : 0) +
-      600;
+      cards.length * baseCardWidth +
+      (cards.length - 1) * cardGap +
+      padding +
+      (expandedCard !== null ? expandedCardWidth - baseCardWidth : 0);
+
     gsap.to(containerRef.current, {
       width: totalWidth,
       duration: 1,
@@ -123,45 +133,52 @@ const ScrollRevealRight = ({ cards }) => {
       const cardsEl = cardRefs.current;
       if (!cardsEl.length) return;
 
-      const viewportWidth = window.innerWidth;
-      const extraBuffer = 200;
+      const baseCardWidth = 374;
+      const expandedCardWidth = 1162;
+      const cardGap = 28;
+      const padding = 160; // 80px left + 80px right
 
-      // Total scroll length = container width - viewport width
-      const totalScrollable =
-        containerRef.current.scrollWidth - viewportWidth + extraBuffer;
+      // Helper to get fresh state during refresh without re-running effect
+      const getMaxScroll = () => {
+        const currentExpanded = expandedCardRef.current; // Use ref here
+        const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+        
+        const calculatedTotalWidth =
+          cards.length * baseCardWidth +
+          (cards.length - 1) * cardGap +
+          padding +
+          (currentExpanded !== null ? expandedCardWidth - baseCardWidth : 0);
+
+        return calculatedTotalWidth - viewportWidth;
+      };
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: `+=${window.innerHeight * (cards.length - 1)}`,
-          scrub: 1.1,
+          end: () => `+=${getMaxScroll()}`, // Use functional value
+          scrub: 0.5, // Reduced scrub slightly for responsiveness
           pin: true,
           anticipatePin: 1,
-          invalidateOnRefresh: true,
+          invalidateOnRefresh: true, // Recalculate on resize
         },
       });
 
-      // Horizontal movement based on real card positions
-      cardsEl.forEach((card, i) => {
-        if (i === 0) return; // First card is already visible
-
-        const targetX = -card.offsetLeft + 80; // 80px padding to match your container
-
-        tl.to(
-          containerRef.current,
-          {
-            x: targetX,
-            duration: 1,
-            ease: "power3.inOut",
-          },
-          i * 0.8
-        );
+      // Horizontal movement: Functional x value allows updating on refresh
+      tl.to(containerRef.current, {
+        x: () => -getMaxScroll(), // Use functional value
+        ease: "none",
+        duration: 1,
       });
     }, sectionRef);
 
-    return () => ctx.revert();
-  }, [cards.length, isMobile, expandedCard]);
+    return () => {
+      // Capture current X position before reverting to prevent jumps
+      const currentX = gsap.getProperty(containerRef.current, "x");
+      ctx.revert();
+      gsap.set(containerRef.current, { x: currentX });
+    };
+  }, [cards.length, isMobile]); // Removed expandedCard dependency to prevent teardown
 
   return (
     <section
@@ -185,11 +202,12 @@ const ScrollRevealRight = ({ cards }) => {
           style={
             !isMobile
               ? {
-                  paddingLeft: "80px",
-                  paddingRight: "80px",
+                  // paddingLeft: "80px", // Handle via absolute positioning now
+                  // paddingRight: "80px",
                   display: "flex",
                   gap: "28px",
                   position: "relative",
+                  height: "100%" // Added height to ensure container fills parent
                 }
               : {}
           }
@@ -219,7 +237,7 @@ const ScrollRevealRight = ({ cards }) => {
                         width: `${baseCardWidth}px`,
                         minHeight: "306px",
                         top: `${i === 0 ? 35 : i * 120}px`,
-                        left: `${initialLeft}px`,
+                        left: `${80 + initialLeft}px`, // Added 80px offset
                         zIndex: zIndex,
                         transformOrigin: "left center",
                       }
