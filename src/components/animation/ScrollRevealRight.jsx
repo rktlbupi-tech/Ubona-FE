@@ -225,7 +225,7 @@ const ScrollRevealRight = ({ cards }) => {
     <section
       ref={sectionRef}
       className={`relative w-full nnn  ${
-        isMobile ? "py-12.5" : "min-h-screen py-20"
+        isMobile ? "py-12.5" : "min-h-screen pt-20"
       }`}
     >
       <div
@@ -265,7 +265,7 @@ const ScrollRevealRight = ({ cards }) => {
                 onClick={() => handleToggle(i)}
                 className={`${
                   isMobile ? "relative w-full!" : "absolute"
-                } rounded-2xl bg-[#E1E9FF] flex flex-col p-3.5 ${item.color}`}
+                } rounded-2xl -ml-10 bg-[#E1E9FF] flex flex-col p-3.5 ${item.color}`}
                 style={
                   isMobile
                     ? {
