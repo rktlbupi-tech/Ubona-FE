@@ -13,7 +13,6 @@ const HaloShowcase = () => {
   const itemRefs = useRef([]); // Refs for scrolling to items on mobile
   const [sectionVisible, setSectionVisible] = useState(false);
   const progressHeight = useMotionValue("0%");
-
   const data = [
     {
       id: 0,

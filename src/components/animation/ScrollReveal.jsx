@@ -85,27 +85,27 @@ const ScrollReveal = ({ cards }) => {
 
   // --- Render ---
   return (
-     <section
+    <section
       ref={sectionRef}
       className="overflow-hidden px-4"
     >
-      <h3 className="text-[1.75rem] text-[#003066] font-medium tracking-tight text-center md:text-left mt-8 mb-24">Transformative Outcomes</h3>
+      <h3 className="text-[1.75rem] text-[#003066] font-medium tracking-tight text-center md:text-left mt-8 mb-24">Transformative Outcomess</h3>
       {/* Wrapper with enough space */}
       <div className="relative w-full  flex justify-center overflow-visible">
         <div className="relative w-full h-[600px] overflow-visible">
           {cards.map((item, i) => (
             <div
               key={i}
-              ref={(el) => (cardRefs.current[i] = el)} 
+              ref={(el) => (cardRefs.current[i] = el)}
               className={`absolute  flex flex-col justify-between w-full md:w-[23.5%] h-[348px] md:h-[308px] rounded-xl shadow-xl p-6 transition-all duration-700 ${item.color} ${item.text}`}
               style={
                 isDesktop
-                ? {
+                  ? {
                     left: `${i * 25}%`,
                     top: `${i * 55}px`,
                     zIndex: 10 - i,
                   }
-                :  {
+                  : {
                     top: `${i * 60}px`, // Stack offset for mobile
                     left: 0,
                     width: "100%",
